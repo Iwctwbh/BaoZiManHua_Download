@@ -7,7 +7,7 @@ import os
 import shutil
 
 Image.MAX_IMAGE_PIXELS = None  # 禁用解压缩炸弹限制
-ImageFile.LOAD_TRUNCATED_IMAGES = True # 损坏的图片
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # 损坏的图片
 
 folder_temp = "temp"
 folder_output = "OutPut"
@@ -84,7 +84,7 @@ if os.path.exists(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloade
         list_href_downloaded = f.read().decode('utf-8').split('\n')
 
 for link in list_href:
-    print(f"下载章节：{link}")
+    print(f"\r\n下载章节：{link}")
     if link in list_href_downloaded:
         print(f"{link}已存在，跳过")
         continue
