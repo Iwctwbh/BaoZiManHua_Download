@@ -81,8 +81,6 @@ def download():
 
     if not os.path.exists(f"./{folder_output}"):
         os.mkdir(f"./{folder_output}")
-    if not os.path.exists(f"./{folder_temp}/temp"):
-        os.mkdir(f"./{folder_temp}/temp")
 
     list_href_downloaded = []
     # 读取downloaded缓存
@@ -97,6 +95,8 @@ def download():
             print(f"{link}已存在，跳过")
             continue
         count = 0
+        if not os.path.exists(f"./{folder_temp}/temp"):
+            os.mkdir(f"./{folder_temp}/temp")
         for link_img in tqdm(dict_all_href[link], desc=f"下载图片"):
             response = requests.get(link_img)
             with open(f"./{folder_temp}/temp/{count}.png", 'wb') as f:
@@ -127,13 +127,17 @@ def combine_images(link, count):
             count -= 1
             new_count += 1
         if old_count & 1:
-            os.rename(f"./{folder_temp}{file_path}{old_count - 1}.png",
-                      f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
+            if is_first:
+                shutil.copy(f"./{folder_temp}{file_path}{old_count - 1}.png",
+                            f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
+            else:
+                os.rename(f"./{folder_temp}{file_path}{old_count - 1}.png",
+                          f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
         old_count = int((old_count + 1) / 2)
         is_first = False
     os.rename(f"./{folder_temp}/0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
     shutil.move(f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png", f"./{folder_output}/")
-    os.remove(f"./{folder_temp}/temp/")
+    shutil.rmtree(f"./{folder_temp}/temp/")
     with open(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloaded'}.txt", 'ab') as f:
         f.write((link.__str__()).encode('utf-8'))
         f.write("\n".encode("utf-8"))
