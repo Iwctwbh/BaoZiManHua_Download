@@ -122,7 +122,7 @@ def download(url):
             f.write("\n".encode("utf-8"))
 
 
-if len(sys.argv) > 0:
+if len(sys.argv) > 1:
     download(url=sys.argv[1])
 else:
     download(url="https://baozimh.org/chapterlist/wufashengjidewanjia-taeaparrotkimgavingereddogculturehouse")
