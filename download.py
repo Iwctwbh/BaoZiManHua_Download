@@ -15,7 +15,10 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True  # 损坏的图片
 folder_temp = "temp"
 folder_output = "OutPut"
 
+url = "https://baozimh.org/chapterlist/wufashengjidewanjia-taeaparrotkimgavingereddogculturehouse"
 
+
+@retry(stop_max_attempt_number=3, wait_fixed=1000)
 def comb(png1, png2, style='horizontal'):
     img1, img2 = Image.open(png1), Image.open(png2)
     # 统一图片尺寸，可以自定义设置（宽，高）
@@ -36,8 +39,8 @@ def comb(png1, png2, style='horizontal'):
         joint.save(f'./{folder_temp}/vertical.png')
 
 
-@retry(stop_max_attempt_number=99, wait_fixed=1000)
-def download(url):
+@retry(stop_max_attempt_number=3, wait_fixed=1000)
+def download():
     if not os.path.exists(f"./{folder_temp}"):
         os.mkdir(f"./{folder_temp}")
 
@@ -78,6 +81,8 @@ def download(url):
 
     if not os.path.exists(f"./{folder_output}"):
         os.mkdir(f"./{folder_output}")
+    if not os.path.exists(f"./{folder_temp}/temp"):
+        os.mkdir(f"./{folder_temp}/temp")
 
     list_href_downloaded = []
     # 读取downloaded缓存
@@ -94,35 +99,48 @@ def download(url):
         count = 0
         for link_img in tqdm(dict_all_href[link], desc=f"下载图片"):
             response = requests.get(link_img)
-            with open(f"./{folder_temp}/{count}.png", 'wb') as f:
+            with open(f"./{folder_temp}/temp/{count}.png", 'wb') as f:
                 f.write(response.content)
                 count += 1
+        combine_images(link, count)
 
-        old_count = count
-        if old_count & 1:
-            count -= 1
-        while count > 0:
-            new_count = 0
-            for i in tqdm(range(0, count), desc="合并图片"):
-                if i & 1:
-                    continue
-                comb(f"./{folder_temp}/{i}.png", f"./{folder_temp}/{i + 1}.png", style='vertical')
+
+@retry(stop_max_attempt_number=3, wait_fixed=1000)
+def combine_images(link, count):
+    is_first = True
+    old_count = count
+    if old_count & 1:
+        count -= 1
+    while count > 0:
+        new_count = 0
+        for i in tqdm(range(0, count), desc="合并图片"):
+            if i & 1:
+                continue
+            file_path = "/"
+            if is_first:
+                file_path = "/temp/"
+            comb(f"./{folder_temp}{file_path}{i}.png", f"./{folder_temp}{file_path}{i + 1}.png", style='vertical')
+            if not is_first:
                 os.remove(f"./{folder_temp}/{i}.png")
                 os.remove(f"./{folder_temp}/{i + 1}.png")
-                os.rename(f"./{folder_temp}/vertical.png", f"./{folder_temp}/{new_count}.png")
-                count -= 1
-                new_count += 1
-            if old_count & 1:
-                os.rename(f"./{folder_temp}/{old_count - 1}.png", f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
-            old_count = int((old_count + 1) / 2)
-        os.rename(f"./{folder_temp}/0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
-        shutil.move(f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png", f"./{folder_output}/")
-        with open(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloaded'}.txt", 'ab') as f:
-            f.write((link.__str__()).encode('utf-8'))
-            f.write("\n".encode("utf-8"))
+            os.replace(f"./{folder_temp}/vertical.png", f"./{folder_temp}/{new_count}.png")
+            count -= 1
+            new_count += 1
+        if old_count & 1:
+            os.rename(f"./{folder_temp}{file_path}{old_count - 1}.png",
+                      f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
+        old_count = int((old_count + 1) / 2)
+        is_first = False
+    os.rename(f"./{folder_temp}/0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
+    shutil.move(f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png", f"./{folder_output}/")
+    os.remove(f"./{folder_temp}/temp/")
+    with open(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloaded'}.txt", 'ab') as f:
+        f.write((link.__str__()).encode('utf-8'))
+        f.write("\n".encode("utf-8"))
 
 
 if len(sys.argv) > 1:
-    download(url=sys.argv[1])
+    url = sys.argv[1]
+    download()
 else:
-    download(url="https://baozimh.org/chapterlist/wufashengjidewanjia-taeaparrotkimgavingereddogculturehouse")
+    download()
