@@ -8,6 +8,18 @@ from tqdm import tqdm
 import os
 import shutil
 from retrying import retry
+import socket
+import requests.packages.urllib3.util.connection as urllib3_cn
+
+
+def allowed_gai_family():
+    family = socket.AF_INET
+    # if urllib3_cn.HAS_IPV6:
+    #     family = socket.AF_INET6  # force ipv6 only if it is available
+    return family
+
+
+urllib3_cn.allowed_gai_family = allowed_gai_family
 
 Image.MAX_IMAGE_PIXELS = None  # 禁用解压缩炸弹限制
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # 损坏的图片
