@@ -21,6 +21,14 @@ def allowed_gai_family():
 
 urllib3_cn.allowed_gai_family = allowed_gai_family
 
+http_proxy = "http://10.11.12.6:10801"
+https_proxy = "http://10.11.12.6:10801"
+
+proxies = {
+    # "http": http_proxy,
+    # "https": https_proxy
+}
+
 Image.MAX_IMAGE_PIXELS = None  # 禁用解压缩炸弹限制
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # 损坏的图片
 
@@ -51,7 +59,7 @@ def comb(png1, png2, style='horizontal'):
         joint.save(f'./{folder_temp}/vertical.png')
 
 
-@retry(stop_max_attempt_number=3, wait_fixed=1000)
+# @retry(stop_max_attempt_number=3, wait_fixed=1000)
 def download():
     if not os.path.exists(f"./{folder_temp}"):
         os.mkdir(f"./{folder_temp}")
@@ -110,10 +118,8 @@ def download():
         if not os.path.exists(f"./{folder_temp}/temp"):
             os.mkdir(f"./{folder_temp}/temp")
         for link_img in tqdm(dict_all_href[link], desc=f"下载图片"):
-            response = requests.get(link_img)
-            with open(f"./{folder_temp}/temp/{count}.png", 'wb') as f:
-                f.write(response.content)
-                count += 1
+            download_img(link_img, count)
+            count += 1
         combine_images(link, count)
 
 
@@ -151,6 +157,30 @@ def combine_images(link, count):
     with open(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloaded'}.txt", 'ab') as f:
         f.write((link.__str__()).encode('utf-8'))
         f.write("\n".encode("utf-8"))
+
+
+# 下载图片，失败或者不是图片则重试
+@retry(stop_max_attempt_number=10, wait_fixed=1000)
+def download_img(link, count):
+    response = requests.get(link, proxies=proxies)
+    # 检查是否成功
+    if response.status_code != 200:
+        print(f"下载失败：{link}")
+        # 抛出异常
+        raise Exception
+    # 判断是否为图片
+    if not response.headers['Content-Type'].startswith('image'):
+        print(f"不是图片：{link}")
+        raise Exception
+    with open(f"./{folder_temp}/temp/{count}.png", 'wb') as f:
+        f.write(response.content)
+    # 判断是否为正常的图片
+    try:
+        Image.open(f"./{folder_temp}/temp/{count}.png")
+    except:
+        print(f"不是图片：{link}")
+        # os.remove(f"./{folder_temp}/temp/{count}.png")
+        raise Exception
 
 
 if len(sys.argv) > 1:
