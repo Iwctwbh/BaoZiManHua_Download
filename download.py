@@ -109,11 +109,9 @@ def download():
 def combine_images(link, count):
     is_first = True
     old_count = count
-    if old_count & 1:
-        count -= 1
-    while count > 0:
+    while count > 1:
         new_count = 0
-        for i in tqdm(range(0, count), desc="合并图片"):
+        for i in tqdm(range(0, count - 1), desc="合并图片"):
             if i & 1:
                 continue
             file_path = "/"
@@ -133,7 +131,7 @@ def combine_images(link, count):
             else:
                 os.rename(f"./{folder_temp}{file_path}{old_count - 1}.png",
                           f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
-        old_count = int((old_count + 1) / 2)
+        old_count = int((old_count - 1) / 2) + 1
         is_first = False
     os.rename(f"./{folder_temp}/0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
     shutil.move(f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png", f"./{folder_output}/")
