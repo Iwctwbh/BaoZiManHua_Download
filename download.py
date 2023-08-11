@@ -11,7 +11,6 @@ from retrying import retry
 import socket
 import requests.packages.urllib3.util.connection as urllib3_cn
 
-
 # 仅IPv4
 # def allowed_gai_family():
 #     family = socket.AF_INET
@@ -33,10 +32,9 @@ proxies = {
 Image.MAX_IMAGE_PIXELS = None  # 禁用解压缩炸弹限制
 ImageFile.LOAD_TRUNCATED_IMAGES = True  # 损坏的图片
 
-folder_temp = "temp"
-folder_output = "OutPut"
-
 url = "https://baozimh.org/chapterlist/wufashengjidewanjia-taeaparrotkimgavingereddogculturehouse"
+folder_temp = f"temp_{url.strip('/').split('/')[-1]}"
+folder_output = f"OutPut_{url.strip('/').split('/')[-1]}"
 
 
 @retry(stop_max_attempt_number=3, wait_fixed=1000)
@@ -161,7 +159,7 @@ def combine_images(link, count):
 
 
 # 下载图片，失败或者不是图片则重试
-@retry(stop_max_attempt_number=10, wait_fixed=1000)
+@retry(stop_max_attempt_number=10, wait_fixed=3000)
 def download_img(link, count):
     response = requests.get(link, proxies=proxies)
     # 检查是否成功
@@ -186,6 +184,8 @@ def download_img(link, count):
 
 if len(sys.argv) > 1:
     url = sys.argv[1]
+    folder_temp = f"temp_{url.strip('/').split('/')[-1]}"
+    folder_output = f"OutPut_{url.strip('/').split('/')[-1]}"
     download()
 else:
     download()
