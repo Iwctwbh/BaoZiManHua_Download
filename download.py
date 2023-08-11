@@ -117,7 +117,11 @@ def download():
         if not os.path.exists(f"./{folder_temp}/temp"):
             os.mkdir(f"./{folder_temp}/temp")
         for link_img in tqdm(dict_all_href[link], desc=f"下载图片"):
-            download_img(link_img, count)
+            try:
+                download_img(link_img, count)
+            except Exception as e:
+                print(f"下载图片失败：{link_img}")
+                continue
             count += 1
         combine_images(link, count)
 
@@ -126,6 +130,7 @@ def download():
 def combine_images(link, count):
     is_first = True
     old_count = count
+    file_path = "/temp/"
     while count > 1:
         new_count = 0
         for i in tqdm(range(0, count - 1), desc="合并图片"):
@@ -150,7 +155,7 @@ def combine_images(link, count):
                           f"./{folder_temp}/{int((old_count - 1) / 2)}.png")
         old_count = int((old_count - 1) / 2) + 1
         is_first = False
-    os.rename(f"./{folder_temp}/0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
+    os.rename(f"./{folder_temp}{file_path}0.png", f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png")
     shutil.move(f"./{folder_temp}/{link.strip('/').split('/')[-1]}.png", f"./{folder_output}/")
     shutil.rmtree(f"./{folder_temp}/temp/")
     with open(f"./{folder_temp}/{url.strip('/').split('/')[-1] + '_downloaded'}.txt", 'ab') as f:
@@ -159,7 +164,7 @@ def combine_images(link, count):
 
 
 # 下载图片，失败或者不是图片则重试
-@retry(stop_max_attempt_number=10, wait_fixed=3000)
+@retry(stop_max_attempt_number=10, wait_fixed=1000)
 def download_img(link, count):
     response = requests.get(link, proxies=proxies)
     # 检查是否成功
