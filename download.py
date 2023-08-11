@@ -58,7 +58,7 @@ def comb(png1, png2, style='horizontal'):
         joint.save(f'./{folder_temp}/vertical.png')
 
 
-# @retry(stop_max_attempt_number=3, wait_fixed=1000)
+@retry(stop_max_attempt_number=3, wait_fixed=5000)
 def download():
     if not os.path.exists(f"./{folder_temp}"):
         os.mkdir(f"./{folder_temp}")
